@@ -380,6 +380,9 @@ function webcamLoop() {
       min_fps: parseFloat(Math.min(...fpsArr).toFixed(1)),
       max_inference_ms: parseFloat(Math.max(...msArr).toFixed(1)),
       sample_count: perfSamples.length,
+      current_class: lastTrackedClass != null ? CLASS_KEYS[lastTrackedClass] : null,
+      current_confidence: parseFloat(lightResult.conf.toFixed(4)),
+      stable: lightResult.stable,
     });
     perfSamples = [];
     lastPerfFlush = Date.now();
