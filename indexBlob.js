@@ -11,12 +11,79 @@ const lightModelShardUrl = `${MODEL_BASE}/glamar-light-detection-model-shard1of1
 // ── Config ───────────────────────────────────────────────────────────
 const LIGHT_INPUT = 128;
 const CLASS_NAMES = ['Low', 'bright', 'darkbright', 'normal'];
+const CLASS_KEYS = ['low', 'bright', 'darkbright', 'normal'];
 const BAR_COLORS = ['#ef4444', '#facc15', '#a78bfa', '#22c55e'];
 const CONFIDENCE_THRESHOLD = 0.4;
 const STABLE_FRAMES = 4;
+const PERF_INTERVAL_MS = 12000;
+const WEBHOOK_URL = 'https://webhook.site/0607823d-b31f-470f-a4b5-824646924b8e';
 
 let CANVAS_W = 480;
 let CANVAS_H = 360;
+
+// ── Event Tracking ───────────────────────────────────────────────────
+const SESSION_ID = crypto.randomUUID();
+const sessionStartTime = Date.now();
+const classDurations = { low: 0, bright: 0, darkbright: 0, normal: 0 };
+let noFaceDuration = 0;
+let lastClassTimestamp = Date.now();
+let lastTrackedClass = null;
+let lastFaceCount = -1;
+let perfSamples = [];
+let lastPerfFlush = Date.now();
+
+function emit(eventName, payload) {
+  const envelope = {
+    session_id: SESSION_ID,
+    event: eventName,
+    ts: Date.now(),
+    iso: new Date().toISOString(),
+    payload,
+  };
+  console.log(`[event] ${eventName}`, envelope);
+  try {
+    navigator.sendBeacon(WEBHOOK_URL, JSON.stringify(envelope));
+  } catch (_) {
+    fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(envelope),
+      keepalive: true,
+    }).catch(() => {});
+  }
+}
+
+function updateClassDuration() {
+  const now = Date.now();
+  const elapsed = now - lastClassTimestamp;
+  if (lastTrackedClass != null) {
+    classDurations[CLASS_KEYS[lastTrackedClass]] += elapsed;
+  }
+  lastClassTimestamp = now;
+}
+
+function updateNoFaceDuration(faceCount) {
+  const now = Date.now();
+  if (lastFaceCount === 0) {
+    noFaceDuration += now - lastClassTimestamp;
+  }
+}
+
+emit('session_start', {
+  model_version: 'v4.15.0',
+  ua: navigator.userAgent,
+  viewport: { w: window.innerWidth, h: window.innerHeight },
+  referrer: document.referrer || '',
+});
+
+window.addEventListener('beforeunload', () => {
+  updateClassDuration();
+  emit('session_end', {
+    duration_ms: Date.now() - sessionStartTime,
+    class_durations_ms: { ...classDurations },
+    no_face_duration_ms: noFaceDuration,
+  });
+});
 
 // ── DOM ──────────────────────────────────────────────────────────────
 const canvas = document.getElementById('canvas');
@@ -113,6 +180,7 @@ async function loadModels() {
     startWebcam();
   } catch (err) {
     console.error(err);
+    emit('error', { where: 'model_load', message: err.message, stack: err.stack || null });
     setStatus('Failed to load models. See console.', 'error');
   }
 }
@@ -207,6 +275,7 @@ function drawLightOverlay(label, confidence, stable) {
 
 // ── Webcam ───────────────────────────────────────────────────────────
 async function startWebcam() {
+  emit('camera_state_change', { state: 'requested', error: null });
   try {
     const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
     const constraints = isMobile
@@ -226,20 +295,34 @@ async function startWebcam() {
     lastVideoTime = -1;
     currentFrameCount = 0;
     cachedFaceResult = null;
+    emit('camera_state_change', { state: 'running', error: null });
     setStatus('Camera running.', 'success');
     rafId = requestAnimationFrame(webcamLoop);
   } catch (err) {
     console.error(err);
-    setStatus(`Could not access camera: ${err.name || err.message}`, 'error');
+    const errName = err.name || err.message;
+    const state = errName === 'NotAllowedError' ? 'denied' : 'error';
+    emit('camera_state_change', { state, error: errName });
+    emit('error', { where: 'camera', message: err.message, stack: err.stack || null });
+    setStatus(`Could not access camera: ${errName}`, 'error');
   }
 }
 
+// ── Main Loop ────────────────────────────────────────────────────────
 function webcamLoop() {
   const now = performance.now();
   const t0 = performance.now();
 
   ctx.drawImage(webcamVideo, 0, 0, CANVAS_W, CANVAS_H);
-  const lightResult = inferLight();
+
+  let lightResult;
+  try {
+    lightResult = inferLight();
+  } catch (err) {
+    emit('error', { where: 'inference', message: err.message, stack: err.stack || null });
+    rafId = requestAnimationFrame(webcamLoop);
+    return;
+  }
 
   if (currentFrameCount % FACE_SKIP_RATE === 0) {
     if (webcamVideo.currentTime !== lastVideoTime) {
@@ -259,6 +342,48 @@ function webcamLoop() {
   const numFaces = cachedFaceResult?.faceLandmarks?.length ?? 0;
   faceInfoEl.textContent = `Faces detected: ${numFaces}`;
   timingEl.textContent = `Total: ${totalMs} ms  |  ${fps} FPS`;
+
+  // ── Event: light_classification_change (only on class flip) ──────
+  const currentStableClass = lightResult.stable ? lightResult.best : null;
+  if (currentStableClass !== null && currentStableClass !== lastTrackedClass) {
+    const dist = {};
+    lightResult.probs.forEach((p, i) => { dist[CLASS_KEYS[i]] = parseFloat(p.toFixed(4)); });
+    emit('light_classification_change', {
+      from: lastTrackedClass != null ? CLASS_KEYS[lastTrackedClass] : null,
+      to: CLASS_KEYS[currentStableClass],
+      stable: true,
+      distribution: dist,
+      faces_detected: numFaces,
+    });
+    updateClassDuration();
+    lastTrackedClass = currentStableClass;
+  }
+
+  // ── Event: face_detection_change (only on count change) ──────────
+  if (numFaces !== lastFaceCount && lastFaceCount !== -1) {
+    updateNoFaceDuration(numFaces);
+    emit('face_detection_change', {
+      faces_detected: numFaces,
+      previous_count: lastFaceCount,
+    });
+  }
+  lastFaceCount = numFaces;
+
+  // ── Event: perf_snapshot (periodic) ──────────────────────────────
+  perfSamples.push({ fps: parseFloat(fps), inferMs: parseFloat(totalMs) });
+  if (Date.now() - lastPerfFlush >= PERF_INTERVAL_MS && perfSamples.length > 0) {
+    const fpsArr = perfSamples.map(s => s.fps);
+    const msArr = perfSamples.map(s => s.inferMs);
+    emit('perf_snapshot', {
+      avg_fps: parseFloat((fpsArr.reduce((a, b) => a + b, 0) / fpsArr.length).toFixed(1)),
+      avg_inference_ms: parseFloat((msArr.reduce((a, b) => a + b, 0) / msArr.length).toFixed(1)),
+      min_fps: parseFloat(Math.min(...fpsArr).toFixed(1)),
+      max_inference_ms: parseFloat(Math.max(...msArr).toFixed(1)),
+      sample_count: perfSamples.length,
+    });
+    perfSamples = [];
+    lastPerfFlush = Date.now();
+  }
 
   rafId = requestAnimationFrame(webcamLoop);
 }
