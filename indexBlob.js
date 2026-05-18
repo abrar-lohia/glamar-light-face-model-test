@@ -2,9 +2,11 @@ import {
   FaceLandmarker,
   FilesetResolver,
   DrawingUtils,
-} from '@mediapipe/tasks-vision';
-import lightModelDef from './best_128_light_128_model/glamar-light-detection-model.json';
-import lightModelShardUrl from 'url:./best_128_light_128_model/glamar-light-detection-model-shard1of1.bin';
+} from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs';
+
+const MODEL_BASE = './best_128_light_128_model';
+const lightModelDef = await fetch(`${MODEL_BASE}/glamar-light-detection-model.json`).then(r => r.json());
+const lightModelShardUrl = `${MODEL_BASE}/glamar-light-detection-model-shard1of1.bin`;
 
 // ── Config ───────────────────────────────────────────────────────────
 const LIGHT_INPUT = 128;
