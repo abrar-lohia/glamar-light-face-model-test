@@ -241,11 +241,32 @@ async function startWebcam() {
   }
 }
 
+function drawVideoCover(video) {
+  const vw = video.videoWidth;
+  const vh = video.videoHeight;
+  const canvasAspect = CANVAS_W / CANVAS_H;
+  const videoAspect = vw / vh;
+
+  let sx, sy, sw, sh;
+  if (videoAspect > canvasAspect) {
+    sh = vh;
+    sw = vh * canvasAspect;
+    sx = (vw - sw) / 2;
+    sy = 0;
+  } else {
+    sw = vw;
+    sh = vw / canvasAspect;
+    sx = 0;
+    sy = (vh - sh) / 2;
+  }
+  ctx.drawImage(video, sx, sy, sw, sh, 0, 0, CANVAS_W, CANVAS_H);
+}
+
 function webcamLoop() {
   const now = performance.now();
   const t0 = performance.now();
 
-  ctx.drawImage(webcamVideo, 0, 0, CANVAS_W, CANVAS_H);
+  drawVideoCover(webcamVideo);
   const lightResult = inferLight();
 
   if (currentFrameCount % FACE_SKIP_RATE === 0) {
