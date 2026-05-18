@@ -28,8 +28,16 @@ const ctx = canvas.getContext('2d');
 const overlayCtx = overlayCanvas.getContext('2d');
 
 function resizeCanvas(videoW, videoH) {
+  const isPortrait = window.innerHeight > window.innerWidth;
   const maxW = Math.min(window.innerWidth - 24, 640);
-  const aspect = videoH / videoW;
+
+  let aspect;
+  if (isPortrait && videoW > videoH) {
+    aspect = videoW / videoH;
+  } else {
+    aspect = videoH / videoW;
+  }
+
   CANVAS_W = Math.round(maxW);
   CANVAS_H = Math.round(maxW * aspect);
 
