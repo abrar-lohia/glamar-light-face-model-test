@@ -31,6 +31,7 @@
     }
     #canvas, #overlayCanvas {
       border: 1px solid #334155; border-radius: 8px; background: #1a1a2e;
+      max-width: 100%;
     }
     #overlayCanvas {
       position: absolute; top: 0; left: 0;
@@ -38,7 +39,7 @@
     }
     video { display: none; width: 0; height: 0; }
 
-    #results { font-size: 0.8rem; width: 100%; max-width: 380px; }
+    #results { font-size: 0.8rem; width: 100%; max-width: 480px; }
     .bar-row { display: flex; align-items: center; margin-bottom: 5px; gap: 8px; }
     .bar-label {
       width: 80px; text-align: right; font-weight: 500;
@@ -62,7 +63,7 @@
   </style>
 </head>
 <body>
-  <h1>GlamAR Light + Face Landmark Detection Test</h1>
+  <h1>GlamAR Light Detection Model</h1>
   <div id="status">Loading models&hellip;</div>
 
   <div class="preview-area">

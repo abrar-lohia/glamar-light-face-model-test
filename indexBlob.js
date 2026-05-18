@@ -14,8 +14,9 @@ const CLASS_NAMES = ['Low', 'bright', 'darkbright', 'normal'];
 const BAR_COLORS = ['#ef4444', '#facc15', '#a78bfa', '#22c55e'];
 const CONFIDENCE_THRESHOLD = 0.4;
 const STABLE_FRAMES = 4;
-const CANVAS_W = 480;
-const CANVAS_H = 360;
+
+let CANVAS_W = 480;
+let CANVAS_H = 360;
 
 // ── DOM ──────────────────────────────────────────────────────────────
 const canvas = document.getElementById('canvas');
@@ -23,17 +24,24 @@ const overlayCanvas = document.getElementById('overlayCanvas');
 const statusEl = document.getElementById('status');
 const webcamVideo = document.getElementById('webcamVideo');
 
-canvas.width = CANVAS_W;
-canvas.height = CANVAS_H;
-overlayCanvas.width = CANVAS_W;
-overlayCanvas.height = CANVAS_H;
-canvas.style.width = CANVAS_W + 'px';
-canvas.style.height = CANVAS_H + 'px';
-overlayCanvas.style.width = CANVAS_W + 'px';
-overlayCanvas.style.height = CANVAS_H + 'px';
-
 const ctx = canvas.getContext('2d');
 const overlayCtx = overlayCanvas.getContext('2d');
+
+function resizeCanvas(videoW, videoH) {
+  const maxW = Math.min(window.innerWidth - 24, 640);
+  const aspect = videoH / videoW;
+  CANVAS_W = Math.round(maxW);
+  CANVAS_H = Math.round(maxW * aspect);
+
+  canvas.width = CANVAS_W;
+  canvas.height = CANVAS_H;
+  overlayCanvas.width = CANVAS_W;
+  overlayCanvas.height = CANVAS_H;
+  canvas.style.width = CANVAS_W + 'px';
+  canvas.style.height = CANVAS_H + 'px';
+  overlayCanvas.style.width = CANVAS_W + 'px';
+  overlayCanvas.style.height = CANVAS_H + 'px';
+}
 const drawingUtils = new DrawingUtils(overlayCtx);
 
 function getOrCreate(id) {
@@ -199,11 +207,19 @@ function drawLightOverlay(label, confidence, stable) {
 // ── Webcam ───────────────────────────────────────────────────────────
 async function startWebcam() {
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { width: { ideal: CANVAS_W }, height: { ideal: CANVAS_H }, facingMode: 'user' },
-    });
+    const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+    const constraints = isMobile
+      ? { video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 640 } } }
+      : { video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } };
+
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
     webcamVideo.srcObject = stream;
     await webcamVideo.play();
+
+    const videoW = webcamVideo.videoWidth;
+    const videoH = webcamVideo.videoHeight;
+    resizeCanvas(videoW, videoH);
+
     lastClass = null;
     streak = 0;
     lastVideoTime = -1;
