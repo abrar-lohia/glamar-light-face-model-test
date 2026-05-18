@@ -2,7 +2,7 @@ import {
   FaceLandmarker,
   FilesetResolver,
   DrawingUtils,
-} from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest';
+} from '@mediapipe/tasks-vision';
 import lightModelDef from './best_128_light_128_model/glamar-light-detection-model.json';
 import lightModelShardUrl from 'url:./best_128_light_128_model/glamar-light-detection-model-shard1of1.bin';
 
