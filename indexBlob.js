@@ -28,15 +28,8 @@ const ctx = canvas.getContext('2d');
 const overlayCtx = overlayCanvas.getContext('2d');
 
 function resizeCanvas(videoW, videoH) {
-  const isPortrait = window.innerHeight > window.innerWidth;
   const maxW = Math.min(window.innerWidth - 24, 640);
-
-  let aspect;
-  if (isPortrait && videoW > videoH) {
-    aspect = videoW / videoH;
-  } else {
-    aspect = videoH / videoW;
-  }
+  const aspect = videoH / videoW;
 
   CANVAS_W = Math.round(maxW);
   CANVAS_H = Math.round(maxW * aspect);
@@ -241,32 +234,11 @@ async function startWebcam() {
   }
 }
 
-function drawVideoCover(video) {
-  const vw = video.videoWidth;
-  const vh = video.videoHeight;
-  const canvasAspect = CANVAS_W / CANVAS_H;
-  const videoAspect = vw / vh;
-
-  let sx, sy, sw, sh;
-  if (videoAspect > canvasAspect) {
-    sh = vh;
-    sw = vh * canvasAspect;
-    sx = (vw - sw) / 2;
-    sy = 0;
-  } else {
-    sw = vw;
-    sh = vw / canvasAspect;
-    sx = 0;
-    sy = (vh - sh) / 2;
-  }
-  ctx.drawImage(video, sx, sy, sw, sh, 0, 0, CANVAS_W, CANVAS_H);
-}
-
 function webcamLoop() {
   const now = performance.now();
   const t0 = performance.now();
 
-  drawVideoCover(webcamVideo);
+  ctx.drawImage(webcamVideo, 0, 0, CANVAS_W, CANVAS_H);
   const lightResult = inferLight();
 
   if (currentFrameCount % FACE_SKIP_RATE === 0) {
