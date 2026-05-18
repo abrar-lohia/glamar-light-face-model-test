@@ -8,7 +8,7 @@
     "node": ">=8.9.0"
   },
   "scripts": {
-    "build": "parcel build indexBlob.html --public-url ./ --dist-dir dist"
+    "build": "parcel build index.html --public-url ./ --dist-dir dist"
   },
   "devDependencies": {
     "@mediapipe/tasks-vision": "^0.10.22",
