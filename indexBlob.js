@@ -108,8 +108,19 @@ async function loadModels() {
       outputFacialTransformationMatrixes: false,
     });
 
-    setStatus('Models ready. Starting camera…', 'success');
-    startWebcam();
+    const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+    if (isMobile) {
+      setStatus('Models ready. Tap button to start.', 'success');
+      const startBtn = document.getElementById('startBtn');
+      startBtn.style.display = '';
+      startBtn.addEventListener('click', () => {
+        startBtn.style.display = 'none';
+        startWebcam();
+      }, { once: true });
+    } else {
+      setStatus('Models ready. Starting camera…', 'success');
+      startWebcam();
+    }
   } catch (err) {
     console.error(err);
     setStatus('Failed to load models. See console.', 'error');
@@ -229,7 +240,7 @@ async function startWebcam() {
     rafId = requestAnimationFrame(webcamLoop);
   } catch (err) {
     console.error(err);
-    setStatus('Could not access camera.', 'error');
+    setStatus(`Could not access camera: ${err.name || err.message}`, 'error');
   }
 }
 
