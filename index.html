@@ -1,79 +1,17 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Light + Face Detection</title>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      background: #0f1117;
-      color: #e2e8f0;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px 12px;
-    }
-    h1 { font-size: 1.25rem; font-weight: 600; margin-bottom: 12px; color: #94a3b8; }
-    #status {
-      font-size: 0.82rem; padding: 7px 14px; background: #1e293b;
-      border-radius: 6px; margin-bottom: 12px; min-width: 280px;
-      text-align: center; color: #cbd5e1; transition: background 0.2s;
-    }
-    #status.error { background: #7f1d1d; color: #fca5a5; }
-    #status.success { background: #14532d; color: #86efac; }
-    .preview-area {
-      position: relative; margin-bottom: 14px;
-    }
-    #canvas, #overlayCanvas {
-      border: 1px solid #334155; border-radius: 8px; background: #1a1a2e;
-    }
-    #overlayCanvas {
-      position: absolute; top: 0; left: 0;
-      pointer-events: none; background: transparent; border: none;
-    }
-    video { display: none; width: 0; height: 0; }
-
-    #results { font-size: 0.8rem; width: 100%; max-width: 380px; }
-    .bar-row { display: flex; align-items: center; margin-bottom: 5px; gap: 8px; }
-    .bar-label {
-      width: 80px; text-align: right; font-weight: 500;
-      font-size: 0.76rem; color: #94a3b8; flex-shrink: 0;
-    }
-    .bar-track {
-      flex: 1; height: 13px; background: #1e293b;
-      border-radius: 4px; overflow: hidden;
-    }
-    .bar-fill { height: 100%; border-radius: 4px; transition: width 0.12s ease; }
-    .bar-pct {
-      width: 44px; text-align: right; font-size: 0.73rem;
-      color: #64748b; flex-shrink: 0;
-    }
-    #timing {
-      margin-top: 8px; font-size: 0.73rem; color: #475569; text-align: center;
-    }
-    #faceInfo {
-      margin-top: 6px; font-size: 0.73rem; color: #94a3b8; text-align: center;
-    }
-  </style>
-</head>
-<body>
+<!DOCTYPE html><html lang=en><meta charset=UTF-8><meta name=viewport content="width=device-width, initial-scale=1.0"><title>Light + Face Detection</title><script src=https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js></script><style>*{box-sizing:border-box;margin:0;padding:0}body{color:#e2e8f0;background:#0f1117;flex-direction:column;align-items:center;min-height:100vh;padding:20px 12px;font-family:system-ui,-apple-system,sans-serif;display:flex}h1{color:#94a3b8;margin-bottom:12px;font-size:1.25rem;font-weight:600}#status{text-align:center;color:#cbd5e1;background:#1e293b;border-radius:6px;min-width:280px;margin-bottom:12px;padding:7px 14px;font-size:.82rem;transition:background .2s}#status.error{color:#fca5a5;background:#7f1d1d}#status.success{color:#86efac;background:#14532d}.preview-area{margin-bottom:14px;position:relative}#canvas,#overlayCanvas{background:#1a1a2e;border:1px solid #334155;border-radius:8px}#overlayCanvas{pointer-events:none;background:0 0;border:none;position:absolute;top:0;left:0}video{width:0;height:0;display:none}#results{width:100%;max-width:380px;font-size:.8rem}.bar-row{align-items:center;gap:8px;margin-bottom:5px;display:flex}.bar-label{text-align:right;color:#94a3b8;flex-shrink:0;width:80px;font-size:.76rem;font-weight:500}.bar-track{background:#1e293b;border-radius:4px;flex:1;height:13px;overflow:hidden}.bar-fill{border-radius:4px;height:100%;transition:width .12s}.bar-pct{text-align:right;color:#64748b;flex-shrink:0;width:44px;font-size:.73rem}#timing{color:#475569;text-align:center;margin-top:8px;font-size:.73rem}#faceInfo{color:#94a3b8;text-align:center;margin-top:6px;font-size:.73rem}</style><body>
   <h1>GlamAR Light + Face Landmark Detection Test</h1>
-  <div id="status">Loading models&hellip;</div>
+  <div id=status>Loading models…</div>
 
-  <div class="preview-area">
-    <canvas id="canvas"></canvas>
-    <canvas id="overlayCanvas"></canvas>
-    <video id="webcamVideo" playsinline></video>
+  <div class=preview-area>
+    <canvas id=canvas></canvas>
+    <canvas id=overlayCanvas></canvas>
+    <video id=webcamVideo playsinline></video>
   </div>
 
-  <div id="results"></div>
-  <div id="timing"></div>
-  <div id="faceInfo"></div>
+  <div id=results></div>
+  <div id=timing></div>
+  <div id=faceInfo></div>
 
-  <script type="module" src="indexBlob.js"></script>
-</body>
-</html>
+  <script type=module src=glamar-light-face-model-test.e623b7b4.js></script>
+
+
