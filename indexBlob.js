@@ -108,19 +108,8 @@ async function loadModels() {
       outputFacialTransformationMatrixes: false,
     });
 
-    const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-    if (isMobile) {
-      setStatus('Models ready. Tap button to start.', 'success');
-      const startBtn = document.getElementById('startBtn');
-      startBtn.style.display = '';
-      startBtn.addEventListener('click', () => {
-        startBtn.style.display = 'none';
-        startWebcam();
-      }, { once: true });
-    } else {
-      setStatus('Models ready. Starting camera…', 'success');
-      startWebcam();
-    }
+    setStatus('Models ready. Starting camera…', 'success');
+    startWebcam();
   } catch (err) {
     console.error(err);
     setStatus('Failed to load models. See console.', 'error');
