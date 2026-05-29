@@ -4,7 +4,7 @@ import {
   DrawingUtils,
 } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs';
 
-const MODEL_BASE = './best_128_light_128_model';
+const MODEL_BASE = 'https://cdn.pixelbin.io/v2/glamar-fynd-835885/original/glamar-ml-models/lightdetection_v_03';
 const lightModelDef = await fetch(`${MODEL_BASE}/glamar-light-detection-model.json`).then(r => r.json());
 const lightModelShardUrl = `${MODEL_BASE}/glamar-light-detection-model-shard1of1.bin`;
 
@@ -198,7 +198,7 @@ async function loadModels() {
     faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
       baseOptions: {
         modelAssetPath:
-          'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
+          'https://cdn.pixelbin.io/v2/glamar-fynd-835885/original/glamar-ml-models/face_landmarker.task',
         delegate: 'GPU',
       },
       runningMode: 'VIDEO',
