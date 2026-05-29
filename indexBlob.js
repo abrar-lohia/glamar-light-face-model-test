@@ -72,8 +72,9 @@ function emit(eventName, payload) {
   };
   console.log(`[event] ${eventName}`, envelope);
   const body = JSON.stringify(envelope);
+  const blob = new Blob([body], { type: 'application/json' });
   let sent = false;
-  try { sent = navigator.sendBeacon(WEBHOOK_URL, body); } catch (_) {}
+  try { sent = navigator.sendBeacon(WEBHOOK_URL, blob); } catch (_) {}
   if (!sent) {
     fetch(WEBHOOK_URL, {
       method: 'POST',
@@ -403,15 +404,17 @@ function webcamLoop() {
   if (Date.now() - lastPerfFlush >= PERF_INTERVAL_MS && perfSamples.length > 0) {
     const fpsArr = perfSamples.map(s => s.fps);
     const msArr = perfSamples.map(s => s.inferMs);
+    const classObj = {};
+    lightResult.probs.forEach((p, i) => {
+      classObj[CLASS_KEYS[i]] = String(Math.round(p));
+    });
     emit('perf_snapshot', {
       avg_fps: parseFloat((fpsArr.reduce((a, b) => a + b, 0) / fpsArr.length).toFixed(1)),
       avg_inference_s: parseFloat(((msArr.reduce((a, b) => a + b, 0) / msArr.length) / 1000).toFixed(4)),
       min_fps: parseFloat(Math.min(...fpsArr).toFixed(1)),
       max_inference_s: parseFloat((Math.max(...msArr) / 1000).toFixed(4)),
       sample_count: perfSamples.length,
-      current_class: lastTrackedClass != null ? CLASS_KEYS[lastTrackedClass] : null,
-      current_confidence: parseFloat(lightResult.conf.toFixed(4)),
-      stable: lightResult.stable,
+      class: classObj,
     });
     perfSamples = [];
     lastPerfFlush = Date.now();
