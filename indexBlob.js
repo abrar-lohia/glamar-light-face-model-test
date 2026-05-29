@@ -16,7 +16,7 @@ const BAR_COLORS = ['#ef4444', '#facc15', '#a78bfa', '#22c55e'];
 const CONFIDENCE_THRESHOLD = 0.4;
 const STABLE_FRAMES = 4;
 const PERF_INTERVAL_MS = 12000;
-const WEBHOOK_URL = 'https://mxytq63oik.rbmock.dev';
+const WEBHOOK_URL = 'https://mxytq63oik.rbmock.dev/echo';
 
 let CANVAS_W = 480;
 let CANVAS_H = 360;
