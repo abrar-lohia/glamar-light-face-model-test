@@ -41,15 +41,16 @@ function emit(eventName, payload) {
     payload,
   };
   console.log(`[event] ${eventName}`, envelope);
-  try {
-    navigator.sendBeacon(WEBHOOK_URL, JSON.stringify(envelope));
-  } catch (_) {
+  const body = JSON.stringify(envelope);
+  let sent = false;
+  try { sent = navigator.sendBeacon(WEBHOOK_URL, body); } catch (_) {}
+  if (!sent) {
     fetch(WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(envelope),
+      body,
       keepalive: true,
-    }).catch(() => {});
+    }).catch(err => console.warn('[emit] fetch fallback failed:', err));
   }
 }
 
