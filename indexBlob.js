@@ -32,12 +32,26 @@ let lastFaceCount = -1;
 let perfSamples = [];
 let lastPerfFlush = Date.now();
 
+function getNetworkInfo() {
+  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  if (!conn) return { available: false };
+  return {
+    available: true,
+    downlink_mbps: conn.downlink ?? null,
+    effective_type: conn.effectiveType ?? null,
+    rtt_ms: conn.rtt ?? null,
+    save_data: conn.saveData ?? false,
+    type: conn.type ?? null,
+  };
+}
+
 function emit(eventName, payload) {
   const envelope = {
     session_id: SESSION_ID,
     event: eventName,
     ts: Date.now(),
     iso: new Date().toISOString(),
+    network: getNetworkInfo(),
     payload,
   };
   console.log(`[event] ${eventName}`, envelope);
@@ -80,9 +94,9 @@ emit('session_start', {
 window.addEventListener('beforeunload', () => {
   updateClassDuration();
   emit('session_end', {
-    duration_ms: Date.now() - sessionStartTime,
-    class_durations_ms: { ...classDurations },
-    no_face_duration_ms: noFaceDuration,
+    duration_s: parseFloat(((Date.now() - sessionStartTime) / 1000).toFixed(2)),
+    current_class: lastTrackedClass != null ? CLASS_KEYS[lastTrackedClass] : null,
+    no_face_duration_s: parseFloat((noFaceDuration / 1000).toFixed(2)),
   });
 });
 
@@ -377,9 +391,9 @@ function webcamLoop() {
     const msArr = perfSamples.map(s => s.inferMs);
     emit('perf_snapshot', {
       avg_fps: parseFloat((fpsArr.reduce((a, b) => a + b, 0) / fpsArr.length).toFixed(1)),
-      avg_inference_ms: parseFloat((msArr.reduce((a, b) => a + b, 0) / msArr.length).toFixed(1)),
+      avg_inference_s: parseFloat(((msArr.reduce((a, b) => a + b, 0) / msArr.length) / 1000).toFixed(4)),
       min_fps: parseFloat(Math.min(...fpsArr).toFixed(1)),
-      max_inference_ms: parseFloat(Math.max(...msArr).toFixed(1)),
+      max_inference_s: parseFloat((Math.max(...msArr) / 1000).toFixed(4)),
       sample_count: perfSamples.length,
       current_class: lastTrackedClass != null ? CLASS_KEYS[lastTrackedClass] : null,
       current_confidence: parseFloat(lightResult.conf.toFixed(4)),
