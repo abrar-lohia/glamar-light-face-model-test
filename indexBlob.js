@@ -72,14 +72,13 @@ function emit(eventName, payload) {
   };
   console.log(`[event] ${eventName}`, envelope);
   const body = JSON.stringify(envelope);
-  const blob = new Blob([body], { type: 'application/json' });
   let sent = false;
-  try { sent = navigator.sendBeacon(WEBHOOK_URL, blob); } catch (_) {}
+  try { sent = navigator.sendBeacon(WEBHOOK_URL, body); } catch (_) {}
   if (!sent) {
     fetch(WEBHOOK_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body,
+      mode: 'no-cors',
       keepalive: true,
     }).catch(err => console.warn('[emit] fetch fallback failed:', err));
   }
