@@ -32,26 +32,42 @@ let lastFaceCount = -1;
 let perfSamples = [];
 let lastPerfFlush = Date.now();
 
-function getNetworkInfo() {
-  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  if (!conn) return { available: false };
-  return {
-    available: true,
-    downlink_mbps: conn.downlink ?? null,
-    effective_type: conn.effectiveType ?? null,
-    rtt_ms: conn.rtt ?? null,
-    save_data: conn.saveData ?? false,
-    type: conn.type ?? null,
-  };
+let cachedNetworkSpeed = '0mbps';
+
+async function measureNetworkSpeed() {
+  try {
+    const testUrl = `${MODEL_BASE}/glamar-light-detection-model.json?t=${Date.now()}`;
+    const start = performance.now();
+    const resp = await fetch(testUrl, { cache: 'no-store' });
+    const buf = await resp.arrayBuffer();
+    const elapsedSec = (performance.now() - start) / 1000;
+    const mbps = (buf.byteLength * 8) / (elapsedSec * 1e6);
+    cachedNetworkSpeed = `${mbps.toFixed(2)}mbps`;
+  } catch (_) {}
+}
+
+measureNetworkSpeed();
+setInterval(measureNetworkSpeed, 30000);
+
+function formatTimestamp() {
+  const d = new Date();
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  let h = d.getHours();
+  const min = String(d.getMinutes()).padStart(2, '0');
+  const sec = String(d.getSeconds()).padStart(2, '0');
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return `${dd}/${mm}/${yyyy} ${h}:${min}:${sec}${ampm}`;
 }
 
 function emit(eventName, payload) {
   const envelope = {
     session_id: SESSION_ID,
     event: eventName,
-    ts: Date.now(),
-    iso: new Date().toISOString(),
-    network: getNetworkInfo(),
+    ts: formatTimestamp(),
+    network_speed: cachedNetworkSpeed,
     payload,
   };
   console.log(`[event] ${eventName}`, envelope);
@@ -361,13 +377,11 @@ function webcamLoop() {
   // ── Event: light_classification_change (only on class flip) ──────
   const currentStableClass = lightResult.stable ? lightResult.best : null;
   if (currentStableClass !== null && currentStableClass !== lastTrackedClass) {
-    const dist = {};
-    lightResult.probs.forEach((p, i) => { dist[CLASS_KEYS[i]] = parseFloat(p.toFixed(4)); });
     emit('light_classification_change', {
       from: lastTrackedClass != null ? CLASS_KEYS[lastTrackedClass] : null,
       to: CLASS_KEYS[currentStableClass],
       stable: true,
-      distribution: dist,
+      class_confidence: parseFloat(lightResult.conf.toFixed(4)),
       faces_detected: numFaces,
     });
     updateClassDuration();
